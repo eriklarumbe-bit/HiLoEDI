@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Visita OXXO Puebla · Levantamiento de notas</title>
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#f6f5f2; --surface:#ffffff; --text:#1d1d1f; --muted:#6b6b70; --border:#dcdad4;
+  --red:#d9112f; --red-text:#ffffff; --yellow:#ffc20e; --ok:#1e8e4e; --warn:#b26a00; --high:#c0182d;
+  --chip:#eeece6; --chip-on:#1d1d1f; --chip-on-text:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141416; --surface:#1e1e21; --text:#f1f0ec; --muted:#9a9aa0; --border:#333338;
+    --red:#ef3a54; --ok:#4cc582; --warn:#f0a43a; --high:#ff6b7d;
+    --chip:#2a2a2e; --chip-on:#f1f0ec; --chip-on-text:#141416;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141416; --surface:#1e1e21; --text:#f1f0ec; --muted:#9a9aa0; --border:#333338;
+  --red:#ef3a54; --ok:#4cc582; --warn:#f0a43a; --high:#ff6b7d;
+  --chip:#2a2a2e; --chip-on:#f1f0ec; --chip-on-text:#141416;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;max-width:720px;margin-inline:auto;padding-bottom:40px}
+header{background:var(--red);color:#fff;padding:16px 16px 14px;border-bottom:4px solid var(--yellow)}
+header h1{margin:0;font-size:20px;letter-spacing:.2px}
+header p{margin:2px 0 0;font-size:13px;opacity:.92}
+nav{display:flex;gap:0;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+nav button{flex:1;padding:13px 6px;border:0;background:none;color:var(--muted);font:inherit;font-weight:600;font-size:14px;border-bottom:3px solid transparent;cursor:pointer}
+nav button.on{color:var(--text);border-bottom-color:var(--red)}
+main{padding:14px}
+section{display:none}
+section.on{display:block}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px}
+label.l{display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin:14px 0 6px}
+label.l:first-child{margin-top:0}
+input[type=text],input[type=date],textarea,select{width:100%;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font:inherit}
+textarea{min-height:96px;resize:vertical}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--red);outline-offset:1px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:9px 13px;border-radius:999px;border:1px solid var(--border);background:var(--chip);color:var(--text);font:inherit;font-size:14px;cursor:pointer}
+.chip.on{background:var(--chip-on);color:var(--chip-on-text);border-color:var(--chip-on)}
+.chip.p-alta.on{background:var(--high);border-color:var(--high);color:#fff}
+.chip.p-media.on{background:var(--warn);border-color:var(--warn);color:#fff}
+.chip.p-baja.on{background:var(--ok);border-color:var(--ok);color:#fff}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{width:100%;padding:15px;border:0;border-radius:12px;background:var(--red);color:#fff;font:inherit;font-weight:700;font-size:16px;cursor:pointer}
+.btn.sec{background:var(--chip);color:var(--text);border:1px solid var(--border)}
+.btn.sm{width:auto;padding:8px 12px;font-size:13px;border-radius:9px}
+.btn+.btn{margin-top:10px}
+.hint{font-size:13px;color:var(--muted);margin:6px 0 0}
+.note{border-left:5px solid var(--border)}
+.note.alta{border-left-color:var(--high)}
+.note.media{border-left-color:var(--warn)}
+.note.baja{border-left-color:var(--ok)}
+.note.done{opacity:.55}
+.note .top{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:var(--muted);margin-bottom:6px}
+.note .store{font-weight:700;color:var(--text)}
+.note .txt{white-space:pre-wrap;margin:4px 0 8px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.tag{font-size:12px;padding:3px 9px;border-radius:999px;background:var(--chip);color:var(--text)}
+.tag.t-cambio{background:var(--red);color:#fff}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.filters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 6px;text-align:center}
+.stat b{display:block;font-size:22px}
+.stat span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.empty{text-align:center;color:var(--muted);padding:30px 10px}
+textarea.out{min-height:260px;font:13px/1.4 ui-monospace,Menlo,Consolas,monospace}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(24px + env(safe-area-inset-bottom,0px));background:var(--chip-on);color:var(--chip-on-text);padding:11px 18px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<header>
+  <h1>Visita equipo directivo · OXXO Puebla</h1>
+  <p id="hdrInfo">Levantamiento de cambios y hallazgos</p>
+</header>
+<nav>
+  <button data-tab="captura" class="on">➕ Captura</button>
+  <button data-tab="lista">📋 Notas <span id="cnt"></span></button>
+  <button data-tab="resumen">📤 Resumen</button>
+</nav>
+
+<main>
+<!-- CAPTURA -->
+<section id="captura" class="on">
+  <div class="card">
+    <label class="l" for="visitName">Datos de la visita (una sola vez)</label>
+    <input type="text" id="visitName" placeholder="Ej. Recorrido directivo Puebla – octubre">
+    <div class="row" style="margin-top:10px">
+      <input type="date" id="visitDate" aria-label="Fecha de la visita">
+      <input type="text" id="visitTeam" placeholder="Quiénes van (opcional)" aria-label="Asistentes">
+    </div>
+  </div>
+
+  <div class="card">
+    <label class="l" for="store">Tienda</label>
+    <input type="text" id="store" list="storeList" placeholder="Nombre, clave o dirección corta" autocomplete="off">
+    <datalist id="storeList"></datalist>
+    <p class="hint">Las tiendas que ya capturaste aparecen como sugerencia.</p>
+
+    <label class="l">Tipo</label>
+    <div class="chips" id="tipoChips"></div>
+
+    <label class="l">Área</label>
+    <div class="chips" id="areaChips"></div>
+
+    <label class="l">Prioridad</label>
+    <div class="chips" id="prioChips"></div>
+
+    <label class="l" for="texto">Qué se observó / qué hay que cambiar</label>
+    <textarea id="texto" placeholder="Escribe o dicta con el micrófono de tu teclado 🎤"></textarea>
+
+    <div class="row">
+      <div>
+        <label class="l" for="resp">Responsable</label>
+        <input type="text" id="resp" placeholder="Quién da seguimiento">
+      </div>
+      <div>
+        <label class="l" for="fecha">Fecha compromiso</label>
+        <input type="date" id="fecha">
+      </div>
+    </div>
+
+    <div style="margin-top:16px">
+      <button class="btn" id="guardar">Guardar nota</button>
+      <button class="btn sec" id="limpiar">Limpiar formulario (conserva la tienda)</button>
+    </div>
+  </div>
+</section>
+
+<!-- LISTA -->
+<section id="lista">
+  <div class="stats">
+    <div class="stat"><b id="sTot">0</b><span>Total</span></div>
+    <div class="stat"><b id="sAlta">0</b><span>Alta</span></div>
+    <div class="stat"><b id="sPend">0</b><span>Pend.</span></div>
+    <div class="stat"><b id="sTiendas">0</b><span>Tiendas</span></div>
+  </div>
+  <div class="filters">
+    <select id="fStore" aria-label="Filtrar por tienda"></select>
+    <select id="fArea" aria-label="Filtrar por área"></select>
+    <select id="fPrio" aria-label="Filtrar por prioridad">
+      <option value="">Toda prioridad</option><option>Alta</option><option>Media</option><option>Baja</option>
+    </select>
+    <select id="fEstado" aria-label="Filtrar por estado">
+      <option value="">Todos los estados</option><option value="pend">Pendientes</option><option value="hecho">Cerrados</option>
+    </select>
+  </div>
+  <div id="notas"></div>
+</section>
+
+<!-- RESUMEN -->
+<section id="resumen">
+  <div class="card">
+    <label class="l">Formato</label>
+    <div class="chips" id="fmtChips"></div>
+    <p class="hint" id="fmtHint"></p>
+    <textarea class="out" id="out" readonly aria-label="Resumen generado"></textarea>
+    <div style="margin-top:12px">
+      <button class="btn" id="copiar">Copiar al portapapeles</button>
+      <button class="btn" id="dlXlsx" style="background:var(--ok)">⬇ Descargar Excel (.xlsx)</button>
+      <button class="btn sec" id="dlCsv">⬇ Descargar CSV</button>
+      <button class="btn sec" id="borrarTodo">Borrar todas las notas</button>
+    </div>
+    <p class="hint">El Excel incluye la hoja «Notas» (todas las observaciones) y la hoja «Resumen» (conteo por tienda). Las notas se guardan en este dispositivo; descarga el archivo al terminar para tener respaldo.</p>
+  </div>
+</section>
+</main>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const TIPOS=["Cambio / acción","Hallazgo","Buena práctica"];
+const AREAS=["Operación","Surtido e inventario","Imagen y limpieza","Equipo y mantenimiento","Seguridad","Personal y capacitación","Servicio al cliente","Oportunidad comercial","Otro"];
+const PRIOS=["Alta","Media","Baja"];
+const KEY="oxxo-puebla-visita-v1";
+
+let S={visit:{name:"",date:"",team:""},notes:[]};
+let form={tipo:TIPOS[0],area:"",prio:"Media"};
+let fmt="whatsapp";
+let editId=null;
+
+function load(){try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r);if(p&&Array.isArray(p.notes))S=p;}}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+const $=id=>document.getElementById(id);
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1800);}
+function fdate(d){if(!d)return"";const [y,m,dd]=d.split("-");return dd+"/"+m+"/"+y;}
+
+function chips(el,opts,key,cls){
+  el.innerHTML="";
+  opts.forEach(o=>{
+    const b=document.createElement("button");
+    b.type="button";b.className="chip"+(cls?" "+cls+o.toLowerCase():"")+(form[key]===o?" on":"");
+    b.textContent=o;
+    b.onclick=()=>{form[key]=(key==="area"&&form[key]===o)?"":o;renderChips();};
+    el.appendChild(b);
+  });
+}
+function renderChips(){
+  chips($("tipoChips"),TIPOS,"tipo");
+  chips($("areaChips"),AREAS,"area");
+  chips($("prioChips"),PRIOS,"prio","p-");
+}
+
+/* Tabs */
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x===b));
+  document.querySelectorAll("section").forEach(s=>s.classList.toggle("on",s.id===b.dataset.tab));
+  if(b.dataset.tab==="lista")renderList();
+  if(b.dataset.tab==="resumen")renderOut();
+  window.scrollTo(0,0);
+});
+
+/* Visit header */
+function saveVisit(){
+  S.visit={name:$("visitName").value.trim(),date:$("visitDate").value,team:$("visitTeam").value.trim()};
+  save();hdr();
+}
+function hdr(){
+  const v=S.visit;const bits=[v.name,fdate(v.date)].filter(Boolean);
+  $("hdrInfo").textContent=bits.length?bits.join(" · "):"Levantamiento de cambios y hallazgos";
+}
+["visitName","visitDate","visitTeam"].forEach(i=>$(i).addEventListener("input",saveVisit));
+
+/* Capture */
+function stores(){return [...new Set(S.notes.map(n=>n.store))].sort((a,b)=>a.localeCompare(b,"es"));}
+function renderStoreList(){$("storeList").innerHTML=stores().map(s=>'<option value="'+esc(s)+'">').join("");}
+
+$("guardar").onclick=()=>{
+  const store=$("store").value.trim(), texto=$("texto").value.trim();
+  if(!store){toast("Falta la tienda");$("store").focus();return;}
+  if(!texto){toast("Escribe la nota");$("texto").focus();return;}
+  const data={store,tipo:form.tipo,area:form.area||"Otro",prio:form.prio,texto,resp:$("resp").value.trim(),fecha:$("fecha").value};
+  if(editId){
+    const n=S.notes.find(x=>x.id===editId);if(n)Object.assign(n,data);
+    editId=null;$("guardar").textContent="Guardar nota";
+  }else{
+    S.notes.unshift(Object.assign({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),done:false,ts:new Date().toISOString()},data));
+  }
+  save();renderStoreList();counts();
+  $("texto").value="";$("resp").value="";$("fecha").value="";form.area="";form.prio="Media";form.tipo=TIPOS[0];renderChips();
+  toast("Nota guardada ✓");
+};
+$("limpiar").onclick=()=>{
+  $("texto").value="";$("resp").value="";$("fecha").value="";form.area="";form.prio="Media";form.tipo=TIPOS[0];
+  editId=null;$("guardar").textContent="Guardar nota";renderChips();
+};
+
+/* List */
+function counts(){$("cnt").textContent=S.notes.length?"("+S.notes.length+")":"";}
+function fillSelect(el,first,vals,cur){
+  el.innerHTML='<option value="">'+first+'</option>'+vals.map(v=>'<option'+(v===cur?" selected":"")+'>'+esc(v)+'</option>').join("");
+}
+function renderList(){
+  const cur={s:$("fStore").value,a:$("fArea").value};
+  fillSelect($("fStore"),"Todas las tiendas",stores(),cur.s);
+  fillSelect($("fArea"),"Todas las áreas",AREAS,cur.a);
+  const fs=$("fStore").value,fa=$("fArea").value,fp=$("fPrio").value,fe=$("fEstado").value;
+  const list=S.notes.filter(n=>(!fs||n.store===fs)&&(!fa||n.area===fa)&&(!fp||n.prio===fp)&&(!fe||(fe==="pend"?!n.done:n.done)));
+  $("sTot").textContent=S.notes.length;
+  $("sAlta").textContent=S.notes.filter(n=>n.prio==="Alta"&&!n.done).length;
+  $("sPend").textContent=S.notes.filter(n=>!n.done).length;
+  $("sTiendas").textContent=stores().length;
+  const box=$("notas");
+  if(!list.length){box.innerHTML='<div class="empty">Aún no hay notas'+(S.notes.length?" con esos filtros":"")+'.</div>';return;}
+  box.innerHTML=list.map(n=>{
+    const t=new Date(n.ts);const hh=t.toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"});
+    return '<div class="card note '+n.prio.toLowerCase()+(n.done?" done":"")+'">'+
+      '<div class="top"><span class="store">'+esc(n.store)+'</span><span>'+hh+'</span></div>'+
+      '<div class="tags"><span class="tag'+(n.tipo===TIPOS[0]?" t-cambio":"")+'">'+esc(n.tipo)+'</span><span class="tag">'+esc(n.area)+'</span><span class="tag">Prioridad '+esc(n.prio)+'</span></div>'+
+      '<div class="txt">'+esc(n.texto)+'</div>'+
+      ((n.resp||n.fecha)?'<div class="hint" style="margin:0 0 8px">'+(n.resp?"👤 "+esc(n.resp):"")+(n.resp&&n.fecha?" · ":"")+(n.fecha?"📅 "+fdate(n.fecha):"")+'</div>':"")+
+      '<div class="actions">'+
+        '<button class="btn sec sm" data-a="done" data-id="'+n.id+'">'+(n.done?"Reabrir":"✔ Cerrar")+'</button>'+
+        '<button class="btn sec sm" data-a="edit" data-id="'+n.id+'">Editar</button>'+
+        '<button class="btn sec sm" data-a="del" data-id="'+n.id+'">Eliminar</button>'+
+      '</div></div>';
+  }).join("");
+}
+["fStore","fArea","fPrio","fEstado"].forEach(i=>$(i).addEventListener("change",renderList));
+$("notas").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-a]");if(!b)return;
+  const n=S.notes.find(x=>x.id===b.dataset.id);if(!n)return;
+  if(b.dataset.a==="done"){n.done=!n.done;save();renderList();}
+  else if(b.dataset.a==="del"){
+    if(b.dataset.armed){S.notes=S.notes.filter(x=>x.id!==n.id);save();renderStoreList();counts();renderList();toast("Nota eliminada");}
+    else{b.dataset.armed="1";b.textContent="¿Seguro? Toca otra vez";setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent="Eliminar";}},2500);}
+  }else if(b.dataset.a==="edit"){
+    $("store").value=n.store;$("texto").value=n.texto;$("resp").value=n.resp||"";$("fecha").value=n.fecha||"";
+    form={tipo:n.tipo,area:n.area,prio:n.prio};editId=n.id;renderChips();
+    $("guardar").textContent="Actualizar nota";
+    document.querySelector('nav button[data-tab="captura"]').click();
+  }
+});
+
+/* Export */
+const FMTS=[["whatsapp","WhatsApp / correo"],["excel","Excel (tabla)"]];
+const HINTS={whatsapp:"Texto agrupado por tienda, listo para mandar a tu equipo.",excel:"Columnas separadas por tabulador: pégalo en Excel o Google Sheets."};
+function renderFmt(){
+  const el=$("fmtChips");el.innerHTML="";
+  FMTS.forEach(([k,t])=>{const b=document.createElement("button");b.type="button";b.className="chip"+(fmt===k?" on":"");b.textContent=t;b.onclick=()=>{fmt=k;renderFmt();renderOut();};el.appendChild(b);});
+  $("fmtHint").textContent=HINTS[fmt];
+}
+function buildText(){
+  const v=S.visit;let o="";
+  o+="VISITA "+(v.name||"OXXO Puebla").toUpperCase()+"\n";
+  if(v.date)o+="Fecha: "+fdate(v.date)+"\n";
+  if(v.team)o+="Equipo: "+v.team+"\n";
+  const pend=S.notes.filter(n=>!n.done);
+  o+="Notas: "+S.notes.length+" · Pendientes: "+pend.length+" · Prioridad alta: "+pend.filter(n=>n.prio==="Alta").length+"\n";
+  const order={Alta:0,Media:1,Baja:2};
+  stores().forEach(s=>{
+    const ns=S.notes.filter(n=>n.store===s).sort((a,b)=>order[a.prio]-order[b.prio]);
+    o+="\n📍 "+s+"\n";
+    ns.forEach(n=>{
+      const ic=n.prio==="Alta"?"🔴":n.prio==="Media"?"🟡":"🟢";
+      o+=ic+" ["+n.area+"] "+(n.tipo===TIPOS[0]?"":n.tipo+": ")+n.texto+(n.done?" ✅":"");
+      const extra=[n.resp&&"Resp: "+n.resp,n.fecha&&"Para: "+fdate(n.fecha)].filter(Boolean).join(" | ");
+      if(extra)o+=" ("+extra+")";
+      o+="\n";
+    });
+  });
+  return S.notes.length?o:"Aún no hay notas para resumir.";
+}
+function buildTSV(){
+  const h=["Tienda","Tipo","Área","Prioridad","Nota","Responsable","Fecha compromiso","Estado"];
+  const clean=s=>String(s||"").replace(/[\t\r\n]+/g," ");
+  const rows=S.notes.map(n=>[n.store,n.tipo,n.area,n.prio,n.texto,n.resp,fdate(n.fecha),n.done?"Cerrado":"Pendiente"].map(clean).join("\t"));
+  return [h.join("\t")].concat(rows).join("\n");
+}
+function renderOut(){renderFmt();$("out").value=fmt==="excel"?buildTSV():buildText();}
+$("copiar").onclick=async()=>{
+  const ta=$("out");const txt=ta.value;
+  try{await navigator.clipboard.writeText(txt);toast("Copiado ✓");return;}catch(e){}
+  try{ta.removeAttribute("readonly");ta.focus();ta.select();ta.setSelectionRange(0,txt.length);const ok=document.execCommand("copy");ta.setAttribute("readonly","");if(ok){toast("Copiado ✓");return;}}catch(e){}
+  ta.focus();ta.select();toast("Selecciónalo y copia manualmente");
+};
+function fileName(ext){
+  const d=(S.visit.date||new Date().toISOString().slice(0,10));
+  return "Visita_OXXO_Puebla_"+d+"."+ext;
+}
+function notesRows(){
+  const order=S.notes.slice().reverse();
+  return order.map((n,i)=>{
+    const t=new Date(n.ts);
+    return [i+1,t.toLocaleDateString("es-MX"),t.toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"}),n.store,n.tipo,n.area,n.prio,n.texto,n.resp||"",fdate(n.fecha),n.done?"Cerrado":"Pendiente"];
+  });
+}
+const NOTE_HEAD=["#","Fecha","Hora","Tienda","Tipo","Área","Prioridad","Observación / cambio a realizar","Responsable","Fecha compromiso","Estado"];
+function dl(blob,name){
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);
+}
+function downloadCsv(){
+  if(!S.notes.length){toast("No hay notas que descargar");return;}
+  const q=v=>'"'+String(v).replace(/"/g,'""')+'"';
+  const lines=[NOTE_HEAD].concat(notesRows()).map(r=>r.map(q).join(","));
+  dl(new Blob(["\ufeff"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"}),fileName("csv"));
+  toast("CSV descargado ✓");
+}
+function downloadXlsx(){
+  if(!S.notes.length){toast("No hay notas que descargar");return;}
+  if(typeof XLSX==="undefined"){toast("Sin conexión: se descarga como CSV");downloadCsv();return;}
+  try{
+    const wb=XLSX.utils.book_new();
+    const ws=XLSX.utils.aoa_to_sheet([NOTE_HEAD].concat(notesRows()));
+    ws["!cols"]=[5,11,7,22,16,24,10,60,18,14,11].map(w=>({wch:w}));
+    ws["!autofilter"]={ref:"A1:K"+(S.notes.length+1)};
+    ws["!freeze"]={xSplit:0,ySplit:1};
+    XLSX.utils.book_append_sheet(wb,ws,"Notas");
+    const head=["Tienda","Total","Pendientes","Alta pendiente"];
+    const rs=stores().map(st=>{
+      const ns=S.notes.filter(n=>n.store===st);
+      return [st,ns.length,ns.filter(n=>!n.done).length,ns.filter(n=>!n.done&&n.prio==="Alta").length];
+    });
+    const tot=["TOTAL",S.notes.length,S.notes.filter(n=>!n.done).length,S.notes.filter(n=>!n.done&&n.prio==="Alta").length];
+    const v=S.visit;
+    const top=[["Visita",v.name||""],["Fecha",fdate(v.date)],["Equipo",v.team||""],[]];
+    const wr=XLSX.utils.aoa_to_sheet(top.concat([head],rs,[tot]));
+    wr["!cols"]=[{wch:30},{wch:10},{wch:12},{wch:16}];
+    XLSX.utils.book_append_sheet(wb,wr,"Resumen");
+    XLSX.writeFile(wb,fileName("xlsx"));
+    toast("Excel descargado ✓");
+  }catch(e){toast("No se pudo crear el Excel; se descarga CSV");downloadCsv();}
+}
+$("dlXlsx").onclick=downloadXlsx;
+$("dlCsv").onclick=downloadCsv;
+$("borrarTodo").onclick=function(){
+  if(this.dataset.armed){S={visit:S.visit,notes:[]};save();renderStoreList();counts();renderOut();toast("Notas borradas");delete this.dataset.armed;this.textContent="Borrar todas las notas";}
+  else{this.dataset.armed="1";this.textContent="¿Seguro? Toca otra vez para borrar todo";const b=this;setTimeout(()=>{delete b.dataset.armed;b.textContent="Borrar todas las notas";},3000);}
+};
+
+/* Init */
+load();
+$("visitName").value=S.visit.name||"";
+$("visitDate").value=S.visit.date||new Date().toISOString().slice(0,10);
+$("visitTeam").value=S.visit.team||"";
+if(!S.visit.date)saveVisit();
+hdr();renderChips();renderStoreList();counts();
+</script>
+</body>
+</html>
