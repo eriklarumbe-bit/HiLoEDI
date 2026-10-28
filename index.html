@@ -167,14 +167,17 @@ textarea.out{min-height:260px;font:13px/1.4 ui-monospace,Menlo,Consolas,monospac
     <textarea class="out" id="out" readonly aria-label="Resumen generado"></textarea>
     <div style="margin-top:12px">
       <button class="btn" id="copiar">Copiar al portapapeles</button>
+      <button class="btn" id="dlXlsx" style="background:var(--ok)">⬇ Descargar Excel (.xlsx)</button>
+      <button class="btn sec" id="dlCsv">⬇ Descargar CSV</button>
       <button class="btn sec" id="borrarTodo">Borrar todas las notas</button>
     </div>
-    <p class="hint">El formato Excel/CSV se puede pegar directo en una hoja de cálculo. Las notas se guardan en este dispositivo.</p>
+    <p class="hint">El Excel incluye la hoja «Notas» (todas las observaciones) y la hoja «Resumen» (conteo por tienda). Las notas se guardan en este dispositivo; descarga el archivo al terminar para tener respaldo.</p>
   </div>
 </section>
 </main>
 <div class="toast" id="toast"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 const TIPOS=["Cambio / acción","Hallazgo","Buena práctica"];
 const AREAS=["Operación","Surtido e inventario","Imagen y limpieza","Equipo y mantenimiento","Seguridad","Personal y capacitación","Servicio al cliente","Oportunidad comercial","Otro"];
@@ -342,6 +345,57 @@ $("copiar").onclick=async()=>{
   try{ta.removeAttribute("readonly");ta.focus();ta.select();ta.setSelectionRange(0,txt.length);const ok=document.execCommand("copy");ta.setAttribute("readonly","");if(ok){toast("Copiado ✓");return;}}catch(e){}
   ta.focus();ta.select();toast("Selecciónalo y copia manualmente");
 };
+function fileName(ext){
+  const d=(S.visit.date||new Date().toISOString().slice(0,10));
+  return "Visita_OXXO_Puebla_"+d+"."+ext;
+}
+function notesRows(){
+  const order=S.notes.slice().reverse();
+  return order.map((n,i)=>{
+    const t=new Date(n.ts);
+    return [i+1,t.toLocaleDateString("es-MX"),t.toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"}),n.store,n.tipo,n.area,n.prio,n.texto,n.resp||"",fdate(n.fecha),n.done?"Cerrado":"Pendiente"];
+  });
+}
+const NOTE_HEAD=["#","Fecha","Hora","Tienda","Tipo","Área","Prioridad","Observación / cambio a realizar","Responsable","Fecha compromiso","Estado"];
+function dl(blob,name){
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);
+}
+function downloadCsv(){
+  if(!S.notes.length){toast("No hay notas que descargar");return;}
+  const q=v=>'"'+String(v).replace(/"/g,'""')+'"';
+  const lines=[NOTE_HEAD].concat(notesRows()).map(r=>r.map(q).join(","));
+  dl(new Blob(["\ufeff"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"}),fileName("csv"));
+  toast("CSV descargado ✓");
+}
+function downloadXlsx(){
+  if(!S.notes.length){toast("No hay notas que descargar");return;}
+  if(typeof XLSX==="undefined"){toast("Sin conexión: se descarga como CSV");downloadCsv();return;}
+  try{
+    const wb=XLSX.utils.book_new();
+    const ws=XLSX.utils.aoa_to_sheet([NOTE_HEAD].concat(notesRows()));
+    ws["!cols"]=[5,11,7,22,16,24,10,60,18,14,11].map(w=>({wch:w}));
+    ws["!autofilter"]={ref:"A1:K"+(S.notes.length+1)};
+    ws["!freeze"]={xSplit:0,ySplit:1};
+    XLSX.utils.book_append_sheet(wb,ws,"Notas");
+    const head=["Tienda","Total","Pendientes","Alta pendiente"];
+    const rs=stores().map(st=>{
+      const ns=S.notes.filter(n=>n.store===st);
+      return [st,ns.length,ns.filter(n=>!n.done).length,ns.filter(n=>!n.done&&n.prio==="Alta").length];
+    });
+    const tot=["TOTAL",S.notes.length,S.notes.filter(n=>!n.done).length,S.notes.filter(n=>!n.done&&n.prio==="Alta").length];
+    const v=S.visit;
+    const top=[["Visita",v.name||""],["Fecha",fdate(v.date)],["Equipo",v.team||""],[]];
+    const wr=XLSX.utils.aoa_to_sheet(top.concat([head],rs,[tot]));
+    wr["!cols"]=[{wch:30},{wch:10},{wch:12},{wch:16}];
+    XLSX.utils.book_append_sheet(wb,wr,"Resumen");
+    XLSX.writeFile(wb,fileName("xlsx"));
+    toast("Excel descargado ✓");
+  }catch(e){toast("No se pudo crear el Excel; se descarga CSV");downloadCsv();}
+}
+$("dlXlsx").onclick=downloadXlsx;
+$("dlCsv").onclick=downloadCsv;
 $("borrarTodo").onclick=function(){
   if(this.dataset.armed){S={visit:S.visit,notes:[]};save();renderStoreList();counts();renderOut();toast("Notas borradas");delete this.dataset.armed;this.textContent="Borrar todas las notas";}
   else{this.dataset.armed="1";this.textContent="¿Seguro? Toca otra vez para borrar todo";const b=this;setTimeout(()=>{delete b.dataset.armed;b.textContent="Borrar todas las notas";},3000);}
